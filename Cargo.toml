@@ -1,0 +1,40 @@
+[package]
+name = "basic_screensharing_tool"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Universal Dependencies -----------------------------------------------------------------------------------------------
+log = "0.4.22"
+env_logger = { version = "0.11.5", default-features = false, features = [
+    "auto-color",
+    "humantime",
+] }
+anyhow = "1.0.94"
+dotenvy = "0.15.7"
+
+# Discord Webhook Dependency -----------------------------------------------------------------------------------------
+webhook = "2.1.2"
+reqwest = { version = "0.12.9", features = ["multipart", "json", "stream"] }
+serde_json = "1.0"
+
+# Process/Memory Related Dependencies ----------------------------------------------------------------------------------
+sysinfo = "0.33.0"
+
+# Windows Specific Dependencies ----------------------------------------------------------------------------------------
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58.0", features = [
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Security",
+    "Win32_System_Threading",
+    "Win32_System_ProcessStatus",
+    "Win32_System_Memory",
+    "Win32_System_WindowsProgramming",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_Diagnostics_Debug",
+    "Win32_UI_Controls",
+    "Win32_Graphics_Gdi",
+    "Wdk_System_SystemInformation",
+    "Wdk_Foundation",
+]}
