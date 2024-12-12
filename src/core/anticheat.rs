@@ -1,9 +1,17 @@
-use webhook::client::{WebhookClient, WebhookResult};
-use webhook::models::NonLinkButtonStyle;
-
-use std::any::Any;
-
-use std::fmt;
+use webhook::{
+    client::{
+        WebhookClient,
+        WebhookResult,
+    },
+    models::NonLinkButtonStyle,
+};
+use std::{
+    env,
+    fmt,
+    fs,
+    any::Any,
+    process::Command,
+};
 use crate::core::{
     handle::{
         handle_context::HandleContext,
@@ -112,6 +120,40 @@ impl Anticheat<'_> {
                 .footer("Made by wakeland", None)
                 .field("All scan results", all_scan_results_url.as_str(), false)
             )).await
+    }
+
+    /// Deletes the exe which the anticheat was run from
+    pub fn delete_self(&self) -> std::io::Result<()> {
+        let exe_path = env::current_exe()?;
+
+        // On Windows, we need to use a cmd script since the exe is locked while running
+        #[cfg(target_os = "windows")]
+        {
+            // Create a bat file to delete our exe after we exit
+            let bat_path = exe_path.with_extension("bat");
+            let bat_contents = format!(
+                "@echo off\n\
+             timeout /t 1 /nobreak > NUL\n\
+             del /F \"{}\"\n\
+             del /F \"%~f0\"\n", // This deletes the bat file itself
+                exe_path.display()
+            );
+            fs::write(&bat_path, bat_contents)?;
+
+            // Execute the bat file
+            Command::new("cmd")
+                .arg("/C")
+                .arg(&bat_path)
+                .spawn()?;
+        }
+
+        // On Unix systems we can remove directly
+        #[cfg(not(target_os = "windows"))]
+        {
+            fs::remove_file(exe_path)?;
+        }
+
+        Ok(())
     }
 
     // MUTABLE GETTERS FOR BUILDING ----------------------------------------------------------------
