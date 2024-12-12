@@ -28,13 +28,16 @@ mod tests {
         }
     };
     use crate::core::anticheat::Anticheat;
-    use dotenvy::dotenv;
     use std::env;
+    use dotenvy_macro::dotenv;
 
     // This is a completely impractical test
     // Scans for possibly suspicious activity for assault cube.
     #[test]
     fn it_works() -> anyhow::Result<()> {
+        // Should be used with anticheat.send_webhook()
+        const WEBHOOK_URL: &str = dotenv!("WEBHOOK_URL");
+
         env_logger::builder()
             .filter_level(log::LevelFilter::Debug)
             .format_target(false)
@@ -54,6 +57,7 @@ mod tests {
             .satisfy_all_criteria(true);
 
         anticheat.run()?;
+        //anticheat.send_webhook(WEBHOOK_URL)?;
         log::info!("--- Anticheat scan results ---\n{}", anticheat);
         log::info!("Completed all checks!");
 
