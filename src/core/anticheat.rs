@@ -20,15 +20,17 @@ use crate::core::{
     uploading,
 };
 use anyhow::Result;
+use dotenvy_macro::dotenv;
 use crate::core::uploading::upload_string_to_tmpfile;
 
-pub struct Anticheat {
+pub struct Anticheat<'a> {
     process: Process,
     handle_manager: HandleManager,
     overlay_finder: OverlayFinder,
     handle_detections: usize,
     overlay_detections: usize,
     past_processes: usize, // TODO! Implement this later!
+    pub webhook_url: &'a str
 }
 
 impl Anticheat {
@@ -40,6 +42,7 @@ impl Anticheat {
             handle_detections: 0,
             overlay_detections: 0,
             past_processes: 0,
+            webhook_url: "No webhook url parsed!",
         }
     }
 
@@ -71,14 +74,20 @@ impl Anticheat {
         self.handle_detections > 0 || self.overlay_detections > 0
     }
 
-    pub async fn send_webhook(&self, url: impl ToString) -> WebhookResult<bool> {
-        let client = WebhookClient::new(&url.to_string());
+    /// Update
+    pub fn parse_webhook_url(&mut self) {
+        let url = dotenv!("WEBHOOK_URL");
+        self.webhook_url = url;
+    }
+
+    pub async fn send_webhook(&self) -> WebhookResult<bool> {
+        let client = WebhookClient::new(self.webhook_url);
 
         let (description, color) = if self.has_detections() {
-            ("Found suspicious activity", "#FF0000") // Red
+            ("Found suspicious activity", "red")
         }
         else {
-            ("Did not find suspicious activity.", "#008000") // Green
+            ("Did not find suspicious activity.", "green")
         };
 
         let all_scan_results_url = upload_string_to_tmpfile(
@@ -96,7 +105,7 @@ impl Anticheat {
             .embed(|embed| embed
                 .title("Scan results")
                 .description(description)
-                //.color(color) // Gotta figure this out eventually
+                .color(color) // Gotta figure this out eventually
                 .footer("Made by wakeland", None)
                 .field("All scan results", all_scan_results_url.as_str(), false)
             )).await
