@@ -17,11 +17,14 @@ use crate::core::{
     process::{
         Process
     },
-    uploading,
+    uploading::upload_string_to_tmpfile,
 };
 use anyhow::Result;
 use dotenvy_macro::dotenv;
-use crate::core::uploading::upload_string_to_tmpfile;
+
+// Horribly awfully boof method but that's what this boof library calls for.
+const RED: &str = "15548997";
+const GREEN: &str = "5763719";
 
 pub struct Anticheat<'a> {
     process: Process,
@@ -33,7 +36,7 @@ pub struct Anticheat<'a> {
     pub webhook_url: &'a str
 }
 
-impl Anticheat {
+impl Anticheat<'_> {
     pub fn new(process: Process) -> Self {
         Self {
             process,
@@ -84,10 +87,10 @@ impl Anticheat {
         let client = WebhookClient::new(self.webhook_url);
 
         let (description, color) = if self.has_detections() {
-            ("Found suspicious activity", "red")
+            ("Found suspicious activity", "15548997")
         }
         else {
-            ("Did not find suspicious activity.", "green")
+            ("Did not find suspicious activity.", "5763719")
         };
 
         let all_scan_results_url = upload_string_to_tmpfile(
@@ -105,7 +108,7 @@ impl Anticheat {
             .embed(|embed| embed
                 .title("Scan results")
                 .description(description)
-                .color(color) // Gotta figure this out eventually
+                .color(color)
                 .footer("Made by wakeland", None)
                 .field("All scan results", all_scan_results_url.as_str(), false)
             )).await
@@ -128,7 +131,7 @@ impl Anticheat {
     pub fn overlay_detections(&self) -> usize { self.overlay_detections }
 }
 
-impl fmt::Display for Anticheat {
+impl fmt::Display for Anticheat<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if !self.has_detections() {
             return writeln!(f, "No suspicious handles or overlays detected.");
